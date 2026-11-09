@@ -22,14 +22,16 @@ if [ "${1:-}" = errors ]; then
     exit 0
 fi
 
-if [ "${1:-}" = test ]; then
-    exec python3 -X utf8 -m unittest discover -s tests -v
-fi
+case "${1:-}" in
+    compare) exec python3 -X utf8 -m scripts.compare_npm ;;
+    test) exec python3 -X utf8 -m unittest discover -s tests -v ;;
+    view) exec python3 -m http.server 8000 --bind 127.0.0.1 --directory out ;;
+esac
 
 if [ "${1:-}" = demo ]; then
-    run --stage 4 --config examples/diamond.csv --target D --transitive
-    run --stage 4 --config examples/cycle.csv --target A --transitive
-    run --stage 4 --config examples/isolated.csv --target A
+    for example in is-even is-odd escape-string-regexp; do
+        run --stage 5 --config "examples/$example.csv"
+    done
     exit 0
 fi
 

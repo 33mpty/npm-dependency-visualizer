@@ -13,6 +13,7 @@ from .graph import (
     reverse_dependencies,
 )
 from .registry import Registry
+from .visualize import ascii_lines, render_graph
 
 
 class Stage(IntEnum):
@@ -20,6 +21,7 @@ class Stage(IntEnum):
     DIRECT = 2
     GRAPH = 3
     REVERSE = 4
+    VISUALIZE = 5
 
 
 def parse_arguments():
@@ -30,7 +32,7 @@ def parse_arguments():
         "--config", type=Path, default=Path("examples/is-odd.csv")
     )
     parser.add_argument(
-        "--stage", type=int, choices=tuple(Stage), default=Stage.GRAPH
+        "--stage", type=int, choices=tuple(Stage), default=Stage.VISUALIZE
     )
     parser.add_argument(
         "--target", help="Искомый пакет этапа 4: имя или имя@версия"
@@ -38,11 +40,19 @@ def parse_arguments():
     parser.add_argument(
         "--transitive", action="store_true", help="Все обратные зависимости"
     )
+    parser.add_argument("--output-dir", type=Path, default=Path("out"))
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--open", action="store_true", help="Открыть SVG")
+    mode.add_argument(
+        "--dot-only", action="store_true", help="Создать DOT без Graphviz"
+    )
     args = parser.parse_args()
     if args.stage != Stage.REVERSE and (
         args.target is not None or args.transitive
     ):
         parser.error("--target и --transitive доступны на этапе 4")
+    if args.stage != Stage.VISUALIZE and (args.open or args.dot_only):
+        parser.error("--open и --dot-only доступны на этапе 5")
     return args
 
 
@@ -96,6 +106,22 @@ def show_reverse(graph, query, transitive):
             print("  " + (", ".join(map(label, parents)) or "(нет)"))
 
 
+def show_visualization(graph, root, config, args):
+    dot, svg = render_graph(
+        graph,
+        root,
+        args.output_dir,
+        dot_only=args.dot_only,
+        open_image=args.open,
+    )
+    print(f"DOT: {dot}")
+    if svg is not None:
+        print(f"SVG: {svg}")
+    if config.ascii_tree:
+        for line in ascii_lines(graph, root):
+            print(line)
+
+
 def main():
     args = parse_arguments()
     try:
@@ -112,6 +138,8 @@ def main():
         graph = load_graph(config, root, args.stage)
         if args.stage == Stage.REVERSE:
             show_reverse(graph, args.target or label(root), args.transitive)
+        elif args.stage == Stage.VISUALIZE:
+            show_visualization(graph, root, config, args)
         else:
             show_graph(graph)
     except ProjectError as exc:
