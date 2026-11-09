@@ -1,0 +1,6 @@
+key,value
+package,is-odd
+repository,file:///tmp/repo
+test_mode,false
+version,3.0.1
+ascii_tree,true

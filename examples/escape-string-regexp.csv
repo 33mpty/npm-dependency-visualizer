@@ -1,0 +1,6 @@
+key,value
+package,escape-string-regexp
+repository,https://registry.npmjs.org
+test_mode,false
+version,5.0.0
+ascii_tree,true
