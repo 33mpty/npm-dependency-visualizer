@@ -27,9 +27,9 @@ if [ "${1:-}" = test ]; then
 fi
 
 if [ "${1:-}" = demo ]; then
-    for example in cycle diamond isolated; do
-        run --stage 3 --config "examples/$example.csv"
-    done
+    run --stage 4 --config examples/diamond.csv --target D --transitive
+    run --stage 4 --config examples/cycle.csv --target A --transitive
+    run --stage 4 --config examples/isolated.csv --target A
     exit 0
 fi
 

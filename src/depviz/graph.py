@@ -95,3 +95,19 @@ def read_fixture(path):
             (child, version) for child in dependencies
         )
     return graph
+
+
+def reverse_dependencies(graph, target, *, transitive=False):
+    if target not in graph:
+        raise ProjectError(
+            f"Пакет {label(target)} отсутствует в области поиска."
+        )
+    incoming = {node: [] for node in graph}
+    for node, children in graph.items():
+        for child in children:
+            incoming[child].append(node)
+    parents = (
+        breadth_first(target, incoming.__getitem__)
+        if transitive else incoming[target]
+    )
+    return tuple(node for node in parents if node != target)
