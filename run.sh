@@ -27,7 +27,8 @@ if [ "${1:-}" = test ]; then
 fi
 
 if [ "${1:-}" = demo ]; then
-    run --config examples/is-odd.csv
+    run --stage 2 --config examples/is-odd.csv
+    run --stage 2 --config examples/escape-string-regexp.csv
     exit 0
 fi
 

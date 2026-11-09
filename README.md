@@ -1,22 +1,20 @@
 # Визуализатор npm-зависимостей
 
-## Этап 1. Конфигурация
+## Этап 2. Прямые зависимости npm
 
 Нужен Python 3.9 или новее. Команды выполняются из каталога проекта.
 
-Программа читает пять настроек из CSV с заголовком `key,value`:
-`package`, `repository`, `test_mode`, `version` и `ascii_tree`.
-Успешный запуск печатает их в формате `ключ=значение`.
+`Registry.metadata` читает JSON по HTTP через стандартную библиотеку
+Python и кэширует ответ по имени. `Registry.dependencies` выбирает
+`versions[version].dependencies` для точной версии из CSV.
 
 | Команда | Результат |
 | --- | --- |
-| `./run.sh demo` | Пять значений из `examples/is-odd.csv` |
-| `./run.sh errors` | Пять диагностик, по одной на поле |
-| `./run.sh --config examples/invalid/4-version.csv` | Диагностика для версии и код выхода 2 |
+| `./run.sh demo` | `is-number: ^6.0.0` для `is-odd@3.0.1` и пустой список для `escape-string-regexp@5.0.0` |
+| `./run.sh --stage 2 --config examples/is-odd.csv` | Только прямые зависимости выбранного пакета |
 
-В `examples/invalid/` каждый файл меняет одно поле. В
-`src/depviz/config.py` функция `read_csv_fields` проверяет структуру
-CSV, а `read_config` проверяет значения и возвращает `Config`.
+Для этих запусков нужен доступ к npm Registry. Автотесты подменяют HTTP
+и проверяют выбор версии, кэш, отсутствующую версию и ответ 404.
 
 ## Проверка
 

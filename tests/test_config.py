@@ -23,7 +23,7 @@ class ConfigTests(unittest.TestCase):
         for path in sorted((EXAMPLES / "invalid").glob("*.csv")):
             field = path.stem.split("-", 1)[1]
             with self.subTest(field=field):
-                result = cli("--config", str(path))
+                result = cli("--stage", "1", "--config", str(path))
                 self.assertEqual(result.returncode, 2)
                 self.assertIn(field, result.stderr)
 
@@ -42,7 +42,7 @@ class ConfigTests(unittest.TestCase):
                         read_config(path)
 
     def test_stage_one(self):
-        result = cli("--config", str(EXAMPLES / "is-odd.csv"))
+        result = cli("--stage", "1", "--config", str(EXAMPLES / "is-odd.csv"))
         self.assertEqual(result.returncode, 0)
         self.assertEqual(len(result.stdout.splitlines()), 5)
         self.assertIn("version=3.0.1", result.stdout)
