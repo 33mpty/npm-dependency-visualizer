@@ -5,12 +5,19 @@ from enum import IntEnum
 from pathlib import Path
 
 from .config import ProjectError, read_config
+from .graph import (
+    build_graph,
+    has_cycle,
+    label,
+    read_fixture,
+)
 from .registry import Registry
 
 
 class Stage(IntEnum):
     CONFIG = 1
     DIRECT = 2
+    GRAPH = 3
 
 
 def parse_arguments():
@@ -21,7 +28,7 @@ def parse_arguments():
         "--config", type=Path, default=Path("examples/is-odd.csv")
     )
     parser.add_argument(
-        "--stage", type=int, choices=tuple(Stage), default=Stage.DIRECT
+        "--stage", type=int, choices=tuple(Stage), default=Stage.GRAPH
     )
     return parser.parse_args()
 
@@ -36,12 +43,28 @@ def show_direct(config, root):
     if config.test_mode:
         raise ProjectError("Для этапа 2 нужен адрес npm Registry.")
     dependencies = Registry(config.repository).dependencies(root)
-    name, version = root
-    print(f"Прямые зависимости {name}@{version}:")
+    print(f"Прямые зависимости {label(root)}:")
     for name, spec in sorted(dependencies.items()):
         print(f"  {name}: {spec}")
     if not dependencies:
         print("  (нет)")
+
+
+def load_graph(config, root):
+    if not config.test_mode:
+        return build_graph(root, Registry(config.repository).neighbors)
+    fixture = read_fixture(config.repository)
+    if root not in fixture:
+        raise ProjectError(f"Тестовый пакет {label(root)} не найден.")
+    return build_graph(root, fixture.__getitem__)
+
+
+def show_graph(graph):
+    print("Граф в порядке BFS:")
+    for node, children in graph.items():
+        names = ", ".join(map(label, children)) or "(нет)"
+        print(f"  {label(node)} -> {names}")
+    print(f"Цикл: {'да' if has_cycle(graph) else 'нет'}")
 
 
 def main():
@@ -56,6 +79,8 @@ def main():
         if args.stage == Stage.DIRECT:
             show_direct(config, root)
             return 0
+
+        show_graph(load_graph(config, root))
     except ProjectError as exc:
         print(f"Ошибка: {exc}", file=sys.stderr)
         return 2

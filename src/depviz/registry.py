@@ -3,7 +3,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from .config import PACKAGE, ProjectError
+from .config import PACKAGE, VERSION, ProjectError
+from .semver import max_satisfying
 
 
 class Registry:
@@ -52,3 +53,28 @@ class Registry:
                 f"{name}@{version}: неверный формат dependencies."
             )
         return dependencies
+
+    def resolve(self, name, spec):
+        data = self.metadata(name)
+        versions = data["versions"]
+        if spec in versions and VERSION.fullmatch(spec):
+            return name, spec
+        tags = data.get("dist-tags", {})
+        tagged = tags.get(spec) if isinstance(tags, dict) else None
+        if (
+            isinstance(tagged, str)
+            and tagged in versions
+            and VERSION.fullmatch(tagged)
+        ):
+            return name, tagged
+        try:
+            version = max_satisfying(versions, spec)
+        except ValueError as exc:
+            raise ProjectError(f"{name}: {exc}.") from exc
+        if version is None:
+            raise ProjectError(f"{name}: нет версии для диапазона {spec!r}.")
+        return name, version
+
+    def neighbors(self, node):
+        for name, spec in sorted(self.dependencies(node).items()):
+            yield self.resolve(name, spec)
