@@ -46,3 +46,8 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(len(result.stdout.splitlines()), 5)
         self.assertIn("version=3.0.1", result.stdout)
+
+    def test_config_relative_fixture(self):
+        config = read_config(EXAMPLES / "cycle.csv")
+        self.assertEqual(Path(config.repository), EXAMPLES / "cycle.json")
+        self.assertTrue(config.test_mode)

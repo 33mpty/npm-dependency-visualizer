@@ -27,8 +27,9 @@ if [ "${1:-}" = test ]; then
 fi
 
 if [ "${1:-}" = demo ]; then
-    run --stage 2 --config examples/is-odd.csv
-    run --stage 2 --config examples/escape-string-regexp.csv
+    for example in cycle diamond isolated; do
+        run --stage 3 --config "examples/$example.csv"
+    done
     exit 0
 fi
 
